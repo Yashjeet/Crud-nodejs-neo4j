@@ -1,0 +1,32 @@
+version: "2"
+
+services:
+  node:
+    image: "node:8"
+    working_dir: /app
+    links: 
+      - neo4j_db
+    expose: 
+    - "3000"
+    ports:
+     - "3000:3000"
+    command: bash -c "mkdir -p /app && npm install && NODE_ENV=docker node_modules/nodemon/bin/nodemon.js app.js"
+    volumes :
+    - ./:/app
+
+  neo4j_db:
+    image: neo4j:3.1.0
+    container_name: neo4j_db
+    expose: 
+    - "7474"
+    - "7687"
+    ports: 
+    - "7474:7474"
+    - "7687:7687"
+    volumes:
+    - ./data/dev:/data
+    - ./plugins:/var/lib/neo4j/plugins
+    environment:
+    - NEO4J_AUTH=none
+
+ 
