@@ -25,31 +25,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 const UserRoutes = require('./src/resources/users/users-route')
 
 app.use('/users', UserRoutes);
-// catch 404 and forward to error handler
-app.use(function (req, res, next) {
-    next(createError(404));
-});
 
 // error handler
-app.use(function (err, req, res, next) {
-    // set locals, only providing error in development
-    res.locals.message = err.message;
-    res.locals.error = req.app.get('env') === 'development' ? err : {};
-    // render the error page
-    res.status(err.status || 500);
-    console.log(err.stack)
-
-    res.send({ status: err.status, message: err.message, stack: err.stack });
+app.use((err, req, res, next) => {
+    console.log("skdk")
+    res.send({ status: false, message: err.message || "something went wrong", entity: null });
 });
-
-// mongoose.connect(dbConfig.url, {
-//     useNewUrlParser: true
-// }).then(() => {
-//     console.log("Successfully connected to the database");
-// }).catch(err => {
-//     console.log('Could not connect to the database. Exiting now...', err);
-//     process.exit();
-// });
 
 app.listen(3000, () => {
     console.log("Server is listening on port 3000");

@@ -33,49 +33,49 @@ exports.run = function (query, parameter, next) {
         });
 }
 
-execute = function (query, next) {
-    var session = driver.session();
-    var transaction = session.beginTransaction();
-    var rollback = false;
-    var errorDetails = {}
-    var results = [];
-    transaction.
-        run(query.get(), query.parameter()).
-        subscribe({
-            onNext: function (record) {
-                if (query.transform) {
-                    var transformed = query.transform(record);
-                    results.push(transformed);
-                } else {
-                    results.push(record);
+execute = function (query) {
+    return new Promise((resolve, reject) => {
+        var session = driver.session();
+        var transaction = session.beginTransaction();
+        var rollback = false;
+        var errorDetails = {}
+        var results = [];
+        transaction.
+            run(query.get(), query.parameter()).
+            subscribe({
+                onNext: function (record) {
+                    if (query.transform) {
+                        var transformed = query.transform(record);
+                        results.push(transformed);
+                    } else {
+                        results.push(record);
+                    }
+                },
+                onCompleted: function () { },
+                onError: function (error) {
+                    errorDetails = error;
+                    rollback = true;
                 }
-            },
-            onCompleted: function () { },
-            onError: function (error) {
-                errorDetails = error;
-                rollback = true;
-            }
-        });
+            });
 
-    if (rollback) {
-
-        transaction.rollback();
-        session.close();
-        next({
-            error: errorDetails,
-            message: "transaction failed!"
-        })
-    } else {
-
-        transaction.commit().then(function () {
+        if (rollback) {
+            transaction.rollback();
             session.close();
-            next(null, results);
+            reject({
+                error: errorDetails,
+                message: "transaction failed!"
+            })
+        } else {
 
-        }).catch(function (error) {
-            session.close();
-            next(error);
-        })
-    }
+            transaction.commit().then(function () {
+                session.close();
+                resolve(results)
+            }).catch(function (error) {
+                session.close();
+                reject(error)
+            })
+        }
+    })
 }
 
 module.exports.execute = execute;
